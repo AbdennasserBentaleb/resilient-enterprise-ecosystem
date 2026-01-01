@@ -1,0 +1,31 @@
+# Maven build outputs
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.class
+
+# Logs
+*.log
+audit-logs-volume/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment secrets (never commit these)
+.env
+*.env.local
+
+# Docker
+.dockerignore
+
+# Kubernetes local test artifacts
+k8s/test-job.yaml
+k8s/opt-manifests/
+
+# Compiled JARs (should be built fresh)
+*.jar
+!.mvn/wrapper/*.jar
