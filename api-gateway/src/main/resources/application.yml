@@ -1,0 +1,26 @@
+server:
+  port: ${GATEWAY_PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: core-ledger-service
+          uri: ${LEDGER_URI:http://core-ledger-svc:8082}
+          predicates:
+            - Path=/api/v1/transactions/**, /api/v1/accounts/**
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://keycloak-svc:8080/realms/ledger-realm/protocol/openid-connect/certs}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG

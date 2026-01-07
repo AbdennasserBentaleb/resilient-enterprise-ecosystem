@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: audit-log-service
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: audit-log-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+audit:
+  log:
+    directory: ${AUDIT_LOG_DIR:../audit-logs-volume}
+    filename: transactions-audit.log
+
+logging:
+  level:
+    root: INFO
+    com.portfolio.ecosystem: DEBUG
