@@ -1,0 +1,71 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: antigravity
+      changes:
+        - createTable:
+            tableName: accounts
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance
+                  type: DECIMAL(19,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+        - createTable:
+            tableName: transactions
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: account_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: DECIMAL(19,4)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ide_key
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+  - include:
+      file: db/changelog/db.changelog-rls.yaml
