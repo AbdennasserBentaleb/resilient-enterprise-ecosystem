@@ -1,0 +1,16 @@
+{
+  "name": "ledger-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+    "database.hostname": "postgres-svc",
+    "database.port": "5432",
+    "database.user": "postgres",
+    "database.password": "postgres",
+    "database.dbname": "ledger_db",
+    "topic.prefix": "ledger-server",
+    "plugin.name": "pgoutput",
+    "table.include.list": "public.transactions",
+    "slot.name": "ledger_debezium_slot"
+  }
+}
