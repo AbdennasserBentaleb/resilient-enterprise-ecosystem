@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-log-service
+  namespace: portfolio-ecosystem
+  labels:
+    app: audit-log-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audit-log-service
+  template:
+    metadata:
+      labels:
+        app: audit-log-service
+    spec:
+      containers:
+        - name: audit-log-service
+          image: urregistry.io/portfolio/audit-log-service:latest
+          imagePullPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          envFrom:
+            - configMapRef:
+                name: ledger-config
+          env:
+            - name: AUDIT_LOG_DIR
+              value: "/mnt/audit-logs"
+          volumeMounts:
+            - name: audit-log-nfs
+              mountPath: "/mnt/audit-logs"
+      volumes:
+        - name: audit-log-nfs
+          persistentVolumeClaim:
+            claimName: audit-logs-pvc

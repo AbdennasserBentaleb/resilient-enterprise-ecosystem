@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ledger-config
+  namespace: portfolio-ecosystem
+data:
+  # App configs
+  DB_HOST: "postgres-svc"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-svc:9092"
+  KEYCLOAK_ISSUER_URI: "http://keycloak-svc:8080/realms/ledger-realm"
+  KEYCLOAK_JWK_SET_URI: "http://keycloak-svc:8080/realms/ledger-realm/protocol/openid-connect/certs"
+  RABBITMQ_HOST: "rabbitmq-svc"
+  REDIS_HOST: "redis-svc"

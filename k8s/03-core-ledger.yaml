@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-ledger
+  namespace: portfolio-ecosystem
+  labels:
+    app: core-ledger
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: core-ledger
+  template:
+    metadata:
+      labels:
+        app: core-ledger
+    spec:
+      containers:
+        - name: core-ledger
+          image: urregistry.io/portfolio/core-ledger:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          envFrom:
+            - configMapRef:
+                name: ledger-config
+            - secretRef:
+                name: ledger-secret
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-ledger-svc
+  namespace: portfolio-ecosystem
+spec:
+  selector:
+    app: core-ledger
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 8080
