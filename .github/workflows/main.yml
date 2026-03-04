@@ -1,0 +1,56 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [core-ledger, api-gateway, audit-log-service]
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run Tests & Build
+        run: |
+          cd ${{ matrix.service }}
+          mvn clean package -DskipTests=false
+
+      - name: Build Docker Image
+        run: |
+          cd ${{ matrix.service }}
+          docker build -t urregistry.io/portfolio/${{ matrix.service }}:${{ github.sha }} .
+          docker tag urregistry.io/portfolio/${{ matrix.service }}:${{ github.sha }} urregistry.io/portfolio/${{ matrix.service }}:latest
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'urregistry.io/portfolio/${{ matrix.service }}:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1' # Fails the build if vulnerabilities are found
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Docker Image
+        if: github.ref == 'refs/heads/master'
+        run: |
+          # docker login -u ${{ secrets.REGISTRY_USER }} -p ${{ secrets.REGISTRY_PASS }} urregistry.io
+          # docker push urregistry.io/portfolio/${{ matrix.service }}:${{ github.sha }}
+          # docker push urregistry.io/portfolio/${{ matrix.service }}:latest
+          echo "Mock Push to Registry"
