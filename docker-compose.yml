@@ -17,6 +17,11 @@ services:
       - ./init-scripts/01-init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
     networks:
       - ledger-network
+    healthcheck:
+      test: ["CMD", "psql", "-U", "postgres", "-d", "keycloak_db", "-c", "SELECT 1;"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   # Distributed Locks and Caching
   redis:
@@ -40,11 +45,12 @@ services:
       KC_DB_PASSWORD: ${KC_DB_PASSWORD:-postgres}
     command: start-dev --import-realm
     ports:
-      - "8081:8080"
+      - "8084:8080"
     volumes:
       - ./keycloak-realm:/opt/keycloak/data/import
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - ledger-network
 
@@ -102,6 +108,56 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    networks:
+      - ledger-network
+
+  core-ledger:
+    build:
+      context: ./core-ledger
+      dockerfile: Dockerfile
+    container_name: core-ledger-svc
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ledger_db
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    networks:
+      - ledger-network
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway-svc
+    ports:
+      - "8080:8080"
+    environment:
+      LEDGER_URI: http://core-ledger-svc:8082
+      KEYCLOAK_JWK_SET_URI: http://ledger-keycloak:8080/realms/ledger-realm/protocol/openid-connect/certs
+    depends_on:
+      - core-ledger
+      - keycloak
+    networks:
+      - ledger-network
+
+  audit-log-service:
+    build:
+      context: ./audit-log-service
+      dockerfile: Dockerfile
+    container_name: audit-log-svc
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ledger-kafka:29092
+    depends_on:
+      - kafka
     networks:
       - ledger-network
 

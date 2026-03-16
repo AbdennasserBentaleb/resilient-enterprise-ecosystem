@@ -5,7 +5,7 @@ metadata:
   namespace: portfolio-ecosystem
 data:
   # App configs
-  DB_HOST: "postgres-svc"
+  DB_HOST: "postgres"
   KAFKA_BOOTSTRAP_SERVERS: "kafka-svc:9092"
   KEYCLOAK_ISSUER_URI: "http://keycloak-svc:8080/realms/ledger-realm"
   KEYCLOAK_JWK_SET_URI: "http://keycloak-svc:8080/realms/ledger-realm/protocol/openid-connect/certs"

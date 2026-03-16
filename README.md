@@ -119,15 +119,15 @@ git clone https://github.com/AbdennasserBentaleb/resilient-enterprise-ecosystem.
 cd resilient-enterprise-ecosystem
 ```
 
-### 2. Start all backing services
+### 2. Start the entire ecosystem
 
 ```bash
-docker-compose up -d
+docker-compose up -d --build
 ```
 
-This starts: **PostgreSQL, Redis, Keycloak, Zookeeper, Kafka, Debezium Connect, RabbitMQ**.
+This automatically initializes **PostgreSQL, Redis, Keycloak, Zookeeper, Kafka, Debezium Connect, RabbitMQ**, AND builds/deploys the `api-gateway` (on port 8080), `core-ledger` (on port 8082), and `audit-log-service` simultaneously!
 
-Wait ~30 seconds for all services to initialize.
+Wait ~40 seconds for all services to initialize.
 
 ### 3. Register the Debezium CDC connector
 
@@ -141,26 +141,12 @@ $json = Get-Content debezium-postgres-connector.json -Raw
 Invoke-RestMethod -Uri "http://localhost:8083/connectors/" -Method Post -Body $json -ContentType "application/json"
 ```
 
-### 4. Build and run each microservice
+### 4. Seed Database with Test Account
+Wait until `core-ledger-svc` has finished initializing (`docker logs core-ledger-svc`), then execute:
 
-Open 3 separate terminals:
-
-**Terminal 1 — Core Ledger:**
 ```bash
-cd core-ledger
-mvn spring-boot:run
+docker exec -i ledger-postgres psql -U postgres -d ledger_db -c "INSERT INTO accounts (id, tenant_id, balance, created_at) VALUES ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'f0e1d2c3-b4a5-6789-abcd-ef0123456789', 1000.00, NOW()) ON CONFLICT DO NOTHING;"
 ```
-
-**Terminal 2 — API Gateway:**
-```bash
-cd api-gateway
-mvn spring-boot:run
-```
-
-**Terminal 3 — Audit Log Service:**
-```bash
-cd audit-log-service
-mvn spring-boot:run
 ```
 
 ---
@@ -332,7 +318,7 @@ All requests pass through the **API Gateway** on port `80` (Kubernetes) or `8080
 | Service | URL | Credentials |
 |---|---|---|
 | **RabbitMQ Management** | http://localhost:15672 | `guest` / `guest` |
-| **Keycloak Admin Console** | http://localhost:8080 | `admin` / `admin` |
+| **Keycloak Admin Console** | http://localhost:8084 | `admin` / `admin` |
 | **Debezium Connect API** | http://localhost:8083/connectors | — |
 
 **Port-forward RabbitMQ when using Kubernetes:**

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-svc
+  name: postgres
   namespace: portfolio-ecosystem
 spec:
   selector:
@@ -135,7 +135,7 @@ spec:
             - name: KC_DB
               value: postgres
             - name: KC_DB_URL
-              value: jdbc:postgresql://postgres-svc:5432/keycloak_db
+              value: jdbc:postgresql://postgres:5432/keycloak_db
             - name: KC_DB_USERNAME
               valueFrom:
                 secretKeyRef:
