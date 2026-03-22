@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resilient Ledger Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b1120;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent-glow: #38bdf8;
+            --credit-color: #34d399;
+            --debit-color: #fb7185;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(52, 211, 153, 0.05) 0%, transparent 50%);
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 15px rgba(56, 189, 248, 0.1);
+        }
+
+        .balance-display {
+            grid-column: 1 / -1;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .balance-label {
+            font-size: 1rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+        }
+
+        .balance-amount {
+            font-size: 4rem;
+            font-weight: 800;
+            text-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+        }
+
+        .balance-amount.updating {
+            animation: pulseFade 0.5s ease;
+        }
+
+        @keyframes pulseFade {
+            0% { opacity: 0.5; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .credit-panel h2::before { background-color: var(--credit-color); box-shadow: 0 0 10px var(--credit-color); }
+        .debit-panel h2::before { background-color: var(--debit-color); box-shadow: 0 0 10px var(--debit-color); }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--accent-glow);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-credit {
+            background: rgba(52, 211, 153, 0.1);
+            color: var(--credit-color);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        .btn-credit:hover {
+            background: rgba(52, 211, 153, 0.2);
+            box-shadow: 0 0 20px rgba(52, 211, 153, 0.2);
+        }
+
+        .btn-debit {
+            background: rgba(251, 113, 133, 0.1);
+            color: var(--debit-color);
+            border: 1px solid rgba(251, 113, 133, 0.3);
+        }
+
+        .btn-debit:hover {
+            background: rgba(251, 113, 133, 0.2);
+            box-shadow: 0 0 20px rgba(251, 113, 133, 0.2);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .toast {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(120%);
+            animation: slideIn 0.3s forwards, slideOut 0.3s forwards 4s;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .toast.success { border-left: 4px solid var(--credit-color); }
+        .toast.error { border-left: 4px solid var(--debit-color); }
+
+        @keyframes slideIn { to { transform: translateX(0); } }
+        @keyframes slideOut { to { transform: translateX(120%); opacity: 0; } }
+
+        @media(max-width: 768px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <div class="header">
+            <h1>Resilient Ledger</h1>
+            <p>Real-time distributed transaction terminal</p>
+        </div>
+
+        <div class="glass-panel balance-display">
+            <div class="balance-label">Available Balance</div>
+            <div class="balance-amount" id="balanceDisplay">Loading...</div>
+        </div>
+
+        <div class="glass-panel credit-panel">
+            <h2>Deposit Funds</h2>
+            <div class="form-group">
+                <label>Amount ($)</label>
+                <input type="number" id="creditAmount" placeholder="e.g. 500.00" step="0.01" min="0.01">
+            </div>
+            <button class="btn-credit" onclick="handleTransaction('credit')">Execute Credit</button>
+        </div>
+
+        <div class="glass-panel debit-panel">
+            <h2>Withdraw Funds</h2>
+            <div class="form-group">
+                <label>Amount ($)</label>
+                <input type="number" id="debitAmount" placeholder="e.g. 150.00" step="0.01" min="0.01">
+            </div>
+            <button class="btn-debit" onclick="handleTransaction('debit')">Execute Debit</button>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8082/api/v1';
+        const ACCOUNT_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+        const TENANT_ID = 'f0e1d2c3-b4a5-6789-abcd-ef0123456789';
+
+        async function fetchBalance() {
+            try {
+                const res = await fetch(`${API_BASE}/accounts/${ACCOUNT_ID}/balance`, {
+                    headers: { 'X-Tenant-Id': TENANT_ID }
+                });
+                if (!res.ok) throw new Error('Failed to fetch balance');
+                const data = await res.json();
+                
+                const display = document.getElementById('balanceDisplay');
+                display.innerText = `$${parseFloat(data.balance).toFixed(2)}`;
+                
+                // Trigger animation
+                display.classList.remove('updating');
+                void display.offsetWidth; // Trigger reflow
+                display.classList.add('updating');
+            } catch (err) {
+                console.error(err);
+                document.getElementById('balanceDisplay').innerText = 'ERROR';
+                showToast('Unable to reach Ledger API', 'error');
+            }
+        }
+
+        async function handleTransaction(type) {
+            const amountInput = document.getElementById(`${type}Amount`);
+            const amount = parseFloat(amountInput.value);
+
+            if (isNaN(amount) || amount <= 0) {
+                showToast('Please enter a valid amount', 'error');
+                return;
+            }
+
+            const idempotencyKey = 'txn-ui-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+            const payload = { accountId: ACCOUNT_ID, amount: amount };
+
+            try {
+                const res = await fetch(`${API_BASE}/transactions/${type}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Tenant-Id': TENANT_ID,
+                        'Idempotency-Key': idempotencyKey
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errBody = await res.text();
+                    throw new Error(errBody || `Transaction rejected (${res.status})`);
+                }
+
+                showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} of $${amount.toFixed(2)} successful`, 'success');
+                amountInput.value = '';
+                
+                // Immediately update balance
+                fetchBalance();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<strong>${type === 'success' ? '✓' : '✗'}</strong> ${message}`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', fetchBalance);
+    </script>
+</body>
+</html>

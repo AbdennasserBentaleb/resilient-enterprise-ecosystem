@@ -147,6 +147,11 @@ Wait until `core-ledger-svc` has finished initializing (`docker logs core-ledger
 ```bash
 docker exec -i ledger-postgres psql -U postgres -d ledger_db -c "INSERT INTO accounts (id, tenant_id, balance, created_at) VALUES ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'f0e1d2c3-b4a5-6789-abcd-ef0123456789', 1000.00, NOW()) ON CONFLICT DO NOTHING;"
 ```
+
+### 5. Access the Trading Dashboard (Web UI)
+Open the fully functional Vanilla HTML frontend to visually interact with the API:
+* **Double-click:** `ui/index.html` (Or drag and drop it into any modern web browser).
+* The dashboard features direct connectivity to `core-ledger` via CORS, dynamic transaction toasts, and real-time distributed execution balance tracking.
 ```
 
 ---
