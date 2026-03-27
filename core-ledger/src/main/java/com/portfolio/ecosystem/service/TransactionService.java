@@ -113,4 +113,9 @@ public class TransactionService {
                 .orElseThrow(() -> new IllegalArgumentException("Account not found: " + accountId));
         return new AccountResponse(account.getId(), account.getBalance());
     }
+
+    @Transactional(readOnly = true)
+    public java.util.List<Transaction> getTransactions(UUID accountId) {
+        return transactionRepository.findByAccountIdOrderByCreatedAtDesc(accountId);
+    }
 }

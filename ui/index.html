@@ -248,9 +248,21 @@
             <p>Real-time distributed transaction terminal</p>
         </div>
 
+        <div class="glass-panel" style="grid-column: 1 / -1; display: grid; gap: 1rem; grid-template-columns: 1fr 1fr;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Account ID</label>
+                <input type="text" id="accountId" value="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Tenant ID</label>
+                <input type="text" id="tenantId" value="f0e1d2c3-b4a5-6789-abcd-ef0123456789">
+            </div>
+        </div>
+
         <div class="glass-panel balance-display">
             <div class="balance-label">Available Balance</div>
             <div class="balance-amount" id="balanceDisplay">Loading...</div>
+            <button style="margin-top: 1rem; max-width: 200px; padding: 0.5rem; background: rgba(255,255,255,0.1); color: white;" onclick="fetchBalance(); fetchTransactions();">Refresh Balance</button>
         </div>
 
         <div class="glass-panel credit-panel">
@@ -270,19 +282,27 @@
             </div>
             <button class="btn-debit" onclick="handleTransaction('debit')">Execute Debit</button>
         </div>
+
+        <div class="glass-panel" style="grid-column: 1 / -1;">
+            <h2>Transaction History</h2>
+            <div id="transactionHistory" style="max-height: 200px; overflow-y: auto; text-align: left; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+                <p style="color: var(--text-muted);">Loading transactions...</p>
+            </div>
+        </div>
     </div>
 
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
         const API_BASE = 'http://localhost:8082/api/v1';
-        const ACCOUNT_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-        const TENANT_ID = 'f0e1d2c3-b4a5-6789-abcd-ef0123456789';
+
+        function getAccountId() { return document.getElementById('accountId').value; }
+        function getTenantId() { return document.getElementById('tenantId').value; }
 
         async function fetchBalance() {
             try {
-                const res = await fetch(`${API_BASE}/accounts/${ACCOUNT_ID}/balance`, {
-                    headers: { 'X-Tenant-Id': TENANT_ID }
+                const res = await fetch(`${API_BASE}/accounts/${getAccountId()}/balance`, {
+                    headers: { 'X-Tenant-Id': getTenantId() }
                 });
                 if (!res.ok) throw new Error('Failed to fetch balance');
                 const data = await res.json();
@@ -301,6 +321,34 @@
             }
         }
 
+        async function fetchTransactions() {
+            const historyDiv = document.getElementById('transactionHistory');
+            try {
+                const res = await fetch(`${API_BASE}/accounts/${getAccountId()}/transactions`, {
+                    headers: { 'X-Tenant-Id': getTenantId() }
+                });
+                if (!res.ok) {
+                    if (res.status === 404) { historyDiv.innerHTML = '<p style="color: var(--text-muted);">No transaction history endpoint found.</p>'; return; }
+                    throw new Error('Failed to fetch transactions');
+                }
+                const data = await res.json();
+                if (data.length === 0) {
+                    historyDiv.innerHTML = '<p style="color: var(--text-muted);">No transactions found.</p>';
+                    return;
+                }
+                historyDiv.innerHTML = data.map(tx => `
+                    <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--glass-border);">
+                        <span><strong style="color: ${tx.amount > 0 ? 'var(--credit-color)' : 'var(--debit-color)'}">${tx.amount > 0 ? '+' : ''}$${Math.abs(tx.amount).toFixed(2)}</strong></span>
+                        <span style="color: var(--text-muted); font-size: 0.85rem;">${new Date(tx.createdAt).toLocaleString()}</span>
+                        <span style="font-size: 0.85rem; color: #fff;">${tx.status}</span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                historyDiv.innerHTML = '<p style="color: var(--text-muted);">Unable to load transactions.</p>';
+            }
+        }
+
         async function handleTransaction(type) {
             const amountInput = document.getElementById(`${type}Amount`);
             const amount = parseFloat(amountInput.value);
@@ -311,14 +359,14 @@
             }
 
             const idempotencyKey = 'txn-ui-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-            const payload = { accountId: ACCOUNT_ID, amount: amount };
+            const payload = { accountId: getAccountId(), amount: amount };
 
             try {
                 const res = await fetch(`${API_BASE}/transactions/${type}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Tenant-Id': TENANT_ID,
+                        'X-Tenant-Id': getTenantId(),
                         'Idempotency-Key': idempotencyKey
                     },
                     body: JSON.stringify(payload)
@@ -332,8 +380,9 @@
                 showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} of $${amount.toFixed(2)} successful`, 'success');
                 amountInput.value = '';
                 
-                // Immediately update balance
+                // Immediately update balance and transactions
                 fetchBalance();
+                fetchTransactions();
             } catch (err) {
                 showToast(err.message, 'error');
             }
@@ -352,7 +401,10 @@
         }
 
         // Init
-        document.addEventListener('DOMContentLoaded', fetchBalance);
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchBalance();
+            fetchTransactions();
+        });
     </script>
 </body>
 </html>

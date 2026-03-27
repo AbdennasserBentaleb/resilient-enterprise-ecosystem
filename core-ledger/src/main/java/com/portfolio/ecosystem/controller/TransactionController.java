@@ -36,5 +36,10 @@ public class TransactionController {
     public ResponseEntity<AccountResponse> getBalance(@PathVariable UUID accountId) {
         return ResponseEntity.ok(transactionService.getBalance(accountId));
     }
+
+    @GetMapping("/accounts/{accountId}/transactions")
+    public ResponseEntity<java.util.List<Transaction>> getTransactions(@PathVariable UUID accountId) {
+        return ResponseEntity.ok(transactionService.getTransactions(accountId));
+    }
 }
 

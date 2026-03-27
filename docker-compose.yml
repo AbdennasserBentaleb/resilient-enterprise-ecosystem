@@ -108,6 +108,9 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
     networks:
       - ledger-network
 
@@ -123,6 +126,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ledger_db
       SPRING_DATA_REDIS_HOST: redis
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin
     depends_on:
       postgres:
         condition: service_healthy

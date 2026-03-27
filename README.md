@@ -97,8 +97,9 @@ Install the following before getting started:
 |---|---|---|
 | **Git** | any | https://git-scm.com |
 | **Java (JDK)** | **17 or higher** | https://adoptium.net |
-| **Maven** | 3.8+ | https://maven.apache.org/download.cgi |
 | **Docker Desktop** | Latest | https://www.docker.com/products/docker-desktop |
+
+> **Note:** A `mvnw` (Maven Wrapper) is included. You don't need to install Maven.
 
 > **Important:** Spring Boot 3 requires **Java 17 minimum**. Java 8 or 11 will not compile this project.
 
@@ -166,17 +167,17 @@ In Docker Desktop → **Settings** → **Kubernetes** →  Enable Kubernetes →
 
 ### 1. Build Docker images
 
-Run from the root of the project:
+Run from the root of the project (if on Windows PowerShell, use `.\mvnw.cmd` instead of `./mvnw`):
 
 ```bash
-# Build all three microservices
-mvn clean package -DskipTests -f core-ledger/pom.xml
+# Build all three microservices using the included Maven Wrapper
+./mvnw clean package -DskipTests -f core-ledger/pom.xml
 docker build -t portfolio/core-ledger:latest core-ledger/
 
-mvn clean package -DskipTests -f api-gateway/pom.xml
+./mvnw clean package -DskipTests -f api-gateway/pom.xml
 docker build -t portfolio/api-gateway:latest api-gateway/
 
-mvn clean package -DskipTests -f audit-log-service/pom.xml
+./mvnw clean package -DskipTests -f audit-log-service/pom.xml
 docker build -t portfolio/audit-log-service:latest audit-log-service/
 ```
 
@@ -281,16 +282,16 @@ Re-run the **same** curl command with the same `Idempotency-Key`. The system sho
 
 Check the Core Ledger logs. You should see the built-in **simulated failure + retry logic** fire:
 ```
-INFO  Received event for transaction: <id>
-WARN  Simulated failure ... Throwing exception to trigger retry...
-WARN  Simulated failure ... Throwing exception to trigger retry...
-INFO  Successfully processed event for transaction <id>
+INFO  Got event off queue -> txId=<id> accountId=<id> amount=<amount>
+WARN  Simulated transient failure on attempt 1 for tx=<id>, retrying...
+WARN  Simulated transient failure on attempt 2 for tx=<id>, retrying...
+INFO  Successfully processed tx=<id> account=<id> amount=<amount>
 ```
 
 ### Step 5 — Run unit tests
 
 ```bash
-cd core-ledger && mvn test
+cd core-ledger && ./mvnw test
 ```
 
 Expected: `Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, BUILD SUCCESS`
@@ -322,7 +323,7 @@ All requests pass through the **API Gateway** on port `80` (Kubernetes) or `8080
 
 | Service | URL | Credentials |
 |---|---|---|
-| **RabbitMQ Management** | http://localhost:15672 | `guest` / `guest` |
+| **RabbitMQ Management** | http://localhost:15672 | `admin` / `admin` |
 | **Keycloak Admin Console** | http://localhost:8084 | `admin` / `admin` |
 | **Debezium Connect API** | http://localhost:8083/connectors | — |
 
