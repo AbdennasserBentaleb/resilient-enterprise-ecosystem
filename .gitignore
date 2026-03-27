@@ -29,3 +29,10 @@ k8s/opt-manifests/
 # Compiled JARs (should be built fresh)
 *.jar
 !.mvn/wrapper/*.jar
+
+# Enterprise / OS overrides
+.DS_Store
+.idea/
+.vscode/
+*.iml
+*.log
